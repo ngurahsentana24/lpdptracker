@@ -1,0 +1,7 @@
+{
+  "name": "LPDP 2N+1 Service Tracker",
+  "description": "A comprehensive dashboard for LPDP scholars to document, visualize, and report their community service activities and impact metrics during their 2N+1 commitment period.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
