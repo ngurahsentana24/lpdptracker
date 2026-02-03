@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Activity } from '../types';
 import { 
@@ -11,8 +11,10 @@ import {
     Target,
     Map,
     Info,
-    Trash2
+    Trash2,
+    Loader2
 } from 'lucide-react';
+import { deleteActivityFromCloud } from '../services/supabase';
 
 interface ActivityDetailProps {
   activities: Activity[];
@@ -22,14 +24,27 @@ interface ActivityDetailProps {
 const ActivityDetail: React.FC<ActivityDetailProps> = ({ activities, onUpdate }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isDeleting, setIsDeleting] = useState(false);
   const activity = activities.find(a => a.id === id);
 
-  const handleDelete = () => {
-    const pass = prompt('Enter Ngurah Verification Passkey to delete:');
+  const handleDelete = async () => {
+    const pass = prompt('Enter Ngurah Verification Passkey to delete from Cloud:');
     if (pass === 'lpdpngurah') {
-        if (window.confirm('Delete this record? This action is permanent.')) {
-            onUpdate(activities.filter(a => a.id !== id));
-            navigate('/activities');
+        if (window.confirm('Delete this record permanently from Supabase?')) {
+            setIsDeleting(true);
+            try {
+                if (id) {
+                    await deleteActivityFromCloud(id);
+                    onUpdate(activities.filter(a => a.id !== id));
+                    alert('Activity purged from cloud registry.');
+                    navigate('/activities');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to delete from Cloud database.");
+            } finally {
+                setIsDeleting(false);
+            }
         }
     } else if (pass !== null) {
         alert('Incorrect passkey. Deletion aborted.');
@@ -59,10 +74,11 @@ const ActivityDetail: React.FC<ActivityDetailProps> = ({ activities, onUpdate })
         <div className="flex items-center space-x-3">
             <button 
               onClick={handleDelete}
-              className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+              disabled={isDeleting}
+              className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors disabled:opacity-50"
               title="Delete Activity (Passkey Required)"
             >
-              <Trash2 size={20} />
+              {isDeleting ? <Loader2 className="animate-spin" size={20} /> : <Trash2 size={20} />}
             </button>
             <button className="p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-500 hover:text-lpdp-blue transition-colors">
                 <Share2 size={20} />
